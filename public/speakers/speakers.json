@@ -1,0 +1,12 @@
+[
+  {
+    "name": "JBL 305P MkII",
+    "path": "/speakers/jbl_305p_mkii.json",
+    "id": "jbl_305p_mkii"
+  },
+  {
+    "name": "Generic 6-inch Speaker (Placeholder)",
+    "path": "/speakers/generic_6inch.json",
+    "id": "generic_6inch"
+  }
+] 

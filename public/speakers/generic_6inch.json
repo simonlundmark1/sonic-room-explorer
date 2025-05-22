@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "source": "Hypothetical data for a generic speaker",
+    "name": "Generic 6-inch Speaker",
+    "price_usd": 100,
+    "measurement_date": "2024-01-01",
+    "vendor_specs": {
+      "frequency_response": "55Hz - 18kHz",
+      "driver_complement": "6-inch woofer, 1-inch tweeter",
+      "sensitivity": "88dB @ 1W/1m",
+      "impedance_nominal": "6 Ohms"
+    },
+    "description": "A placeholder generic 6-inch studio monitor with basic spinorama data.",
+    "source_url": "",
+    "notes": "This data is for demonstration purposes only."
+  },
+  "freqs": [
+    20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000,
+    1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000, 12500, 16000, 20000
+  ],
+  "responses": {
+    "OnAxis": [
+      -15, -12, -10, -8, -6, -4, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+      -0.5, -1, -1.5, -2, -2.5, -3, -3.5, -4, -5, -6, -8, -10, -12
+    ],
+    "ListeningWindow": [
+      -14, -11, -9, -7, -5, -3, -1.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5,
+      -1, -1.5, -2, -2.5, -3, -3.5, -4, -4.5, -5.5, -7, -9, -11, -13
+    ],
+    "EarlyReflections": [
+      -16, -13, -11, -9, -7, -5, -3, -1, -1, -1, -1, -1, -1, -1, -1.5, -2, -2.5, -3,
+      -3.5, -4, -4.5, -5, -5.5, -6, -6.5, -7, -8, -9, -11, -13, -15
+    ]
+  }
+} 
