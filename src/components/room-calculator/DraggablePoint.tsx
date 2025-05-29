@@ -1,7 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { Point } from '@/utils/roomModeCalculations';
-import { Speaker, Head } from 'lucide-react';
 
 interface DraggablePointProps {
   position: Point;
@@ -32,6 +31,7 @@ const DraggablePoint: React.FC<DraggablePointProps> = ({
   const raycaster = useRef(new THREE.Raycaster());
   const intersection = useRef(new THREE.Vector3());
   const offset = useRef(new THREE.Vector3());
+  const mouse = useRef(new THREE.Vector2());
 
   useEffect(() => {
     // Create point geometry based on type
@@ -118,7 +118,8 @@ const DraggablePoint: React.FC<DraggablePointProps> = ({
       const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-      raycaster.current.setFromCamera({ x, y }, camera);
+      mouse.current.set(x, y);
+      raycaster.current.setFromCamera(mouse.current, camera);
       const intersects = raycaster.current.intersectObject(mesh);
       
       if (intersects.length > 0) {
@@ -131,7 +132,7 @@ const DraggablePoint: React.FC<DraggablePointProps> = ({
             mesh.position
           );
           
-          raycaster.current.setFromCamera({ x, y }, camera);
+          raycaster.current.setFromCamera(mouse.current, camera);
           if (raycaster.current.ray.intersectPlane(plane.current, intersection.current)) {
             offset.current.copy(intersection.current).sub(mesh.position);
           }
@@ -146,7 +147,8 @@ const DraggablePoint: React.FC<DraggablePointProps> = ({
         const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         
-        raycaster.current.setFromCamera({ x, y }, camera);
+        mouse.current.set(x, y);
+        raycaster.current.setFromCamera(mouse.current, camera);
         if (raycaster.current.ray.intersectPlane(plane.current, intersection.current)) {
           meshRef.current.position.copy(intersection.current.sub(offset.current));
           

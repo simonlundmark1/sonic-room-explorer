@@ -43,12 +43,17 @@ export function RoomVisualization({
   useEffect(() => {
     if (!containerRef.current) return;
     
+    // Capture the current container element to use in cleanup
+    const currentContainer = containerRef.current;
+    
+    // Clear previous content
+    currentContainer.innerHTML = '';
+    
     // Create renderer
-    const newRenderer = new THREE.WebGLRenderer({ antialias: true });
-    newRenderer.setSize(containerRef.current.clientWidth, containerRef.current.clientHeight);
-    newRenderer.setClearColor(0xf0f0f0, 1);
-    containerRef.current.innerHTML = '';
-    containerRef.current.appendChild(newRenderer.domElement);
+    const newRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    newRenderer.setSize(currentContainer.clientWidth, currentContainer.clientHeight);
+    newRenderer.setClearColor(0x000000, 0); // Transparent background
+    currentContainer.appendChild(newRenderer.domElement);
     
     // Create scene
     const newScene = new THREE.Scene();
@@ -56,7 +61,7 @@ export function RoomVisualization({
     // Create camera
     const newCamera = new THREE.PerspectiveCamera(
       50, 
-      containerRef.current.clientWidth / containerRef.current.clientHeight, 
+      currentContainer.clientWidth / currentContainer.clientHeight, // Initial aspect from container
       0.1, 
       1000
     );
@@ -72,22 +77,23 @@ export function RoomVisualization({
     const targetZ = roomCenterZ_Three_Depth;
 
     // Position camera to view room in upper-left, tilted down
-    const distanceBack = Math.max(room.L, room.W, room.H) * 2.0; 
-    const offsetXFromCenter = room.L * 0; // Camera to the right of room center
-    const offsetY_Above_Center = room.H * 1.0; // Camera significantly above room center
+    const distanceBack = Math.max(room.L, room.W, room.H) * 1.2; // Zoomed in a bit
+    const offsetXFromCenter = room.L * 0; 
+    const offsetY_Above_Center = room.H * 0.1; // Lowered camera height relative to center
 
     const camPosX = roomCenterX_Three + offsetXFromCenter;
-    const camPosY = roomCenterY_Three_Up + offsetY_Above_Center; // Changed to add, moving camera UP
+    const camPosY = roomCenterY_Three_Up + offsetY_Above_Center; 
     const camPosZ = roomCenterZ_Three_Depth + distanceBack;
 
     newCamera.position.set(camPosX, camPosY, camPosZ);
     const initialTargetVec = new THREE.Vector3(targetX, targetY, targetZ);
     newCamera.lookAt(initialTargetVec);
-    newCamera.updateMatrixWorld(); // Ensure camera's matrixWorld is up-to-date for quaternion
+    newCamera.rotateX(THREE.MathUtils.degToRad(10)); // Tilt upward by 10 degrees
+    newCamera.updateMatrixWorld(); // Ensure camera's matrixWorld is up-to-date
 
     // Pan the view: shift camera and target together
-    const shiftUpAmount = room.H * -0.8; // Shift view content up by 30% of room height
-    const shiftLeftAmount = room.L * -0; // Shift view content left by 30% of room length
+    const shiftUpAmount = room.H * -0.03; // Adjusted pan to keep room in view
+    const shiftLeftAmount = room.L * -0;
 
     const worldUp = new THREE.Vector3(0, 1, 0).applyQuaternion(newCamera.quaternion);
     const worldRight = new THREE.Vector3(1, 0, 0).applyQuaternion(newCamera.quaternion);
@@ -108,10 +114,10 @@ export function RoomVisualization({
     newControls.update();
     
     // Add lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2); // Further increased ambient light
     newScene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8); // Increased directional light
     directionalLight.position.set(10, 10, 10);
     newScene.add(directionalLight);
     
@@ -121,19 +127,25 @@ export function RoomVisualization({
     setCamera(newCamera);
     setControls(newControls);
     
-    // Handle resize
+    // Handle resize using ResizeObserver
     const handleResize = () => {
-      if (containerRef.current && newCamera && newRenderer) {
-        const width = containerRef.current.clientWidth;
-        const height = containerRef.current.clientHeight;
-        newCamera.aspect = width / height;
-        newCamera.updateProjectionMatrix();
-        newRenderer.setSize(width, height);
+      if (currentContainer && newCamera && newRenderer) {
+        const width = currentContainer.clientWidth;
+        const height = currentContainer.clientHeight;
+        if (width > 0 && height > 0) { // Ensure dimensions are positive
+          newRenderer.setSize(width, height); // Moved setSize here to be primary
+          newCamera.aspect = width / height;
+          newCamera.updateProjectionMatrix();
+        }
       }
     };
+
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(currentContainer);
     
-    window.addEventListener('resize', handleResize);
-    
+    // Initial call to set size correctly
+    handleResize();
+
     // Animation loop
     let animationId: number;
     const animate = () => {
@@ -148,13 +160,12 @@ export function RoomVisualization({
     
     // Cleanup
     return () => {
-      window.removeEventListener('resize', handleResize);
+      resizeObserver.unobserve(currentContainer);
+      resizeObserver.disconnect();
       cancelAnimationFrame(animationId);
       newControls.dispose();
       newRenderer.dispose();
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
-      }
+      currentContainer.innerHTML = '';
     };
   }, [room.L, room.W, room.H, onSelectPoint, resetTrigger]);
   
@@ -175,9 +186,9 @@ export function RoomVisualization({
     
     // Initial base material setup (will be managed by the highlighting effect)
     const initialBaseMaterial = new THREE.MeshStandardMaterial({
-      color: 0xcccccc, 
+      color: 0xf5f5f5, // Even lighter gray for walls
       transparent: true,
-      opacity: 0.15, // Initial standard opacity
+      opacity: 0.10, // Drastically reduced opacity for a lighter feel
       side: THREE.DoubleSide // Changed to DoubleSide
     });
     const materials = Array(6).fill(null).map(() => initialBaseMaterial.clone());
@@ -230,9 +241,9 @@ export function RoomVisualization({
     const roomMesh = scene.getObjectByName('roomMesh') as THREE.Mesh;
     if (!roomMesh || !Array.isArray(roomMesh.material)) return; // Exit if roomMesh not ready
 
-    const standardBaseOpacity = 0.15;
-    const fadedBaseOpacity = 0.02;
-    const highlightOpacity = 0.5;
+    const standardBaseOpacity = 0.10; // Drastically reduced opacity
+    const fadedBaseOpacity = 0.02;    // Very faint for faded state
+    const highlightOpacity = 0.5; // Keep highlight fairly visible
 
     const currentHighlightMaterial = new THREE.MeshStandardMaterial({
       color: 0x007bff, 
@@ -248,7 +259,7 @@ export function RoomVisualization({
     if (!highlightedSurface) {
       // Reset all to standard base material
       const baseMat = new THREE.MeshStandardMaterial({
-        color: 0xcccccc, 
+        color: 0xf5f5f5, // Use new lighter gray
         transparent: true, 
         opacity: standardBaseOpacity, 
         side: THREE.DoubleSide, 
@@ -262,7 +273,7 @@ export function RoomVisualization({
     // A surface is highlighted
     const newMaterials = Array(6).fill(null).map(() => 
       new THREE.MeshStandardMaterial({
-        color: 0xcccccc, 
+        color: 0xf5f5f5, // Use new lighter gray
         transparent: true, 
         opacity: fadedBaseOpacity, 
         side: THREE.DoubleSide, 
@@ -330,7 +341,11 @@ export function RoomVisualization({
     ];
 
     const raycaster = new THREE.Raycaster();
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff }); // Linewidth has limited effect
+    const lineMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x0000ff, 
+      transparent: true, 
+      opacity: 0.5 
+    });
 
     directions.forEach((dir, index) => {
       raycaster.set(listenerPos3D, dir);
@@ -358,7 +373,11 @@ export function RoomVisualization({
     // Add 70-degree arc
     const arcRadius = 0.5; // meters from listener
     const arcSegments = 32;
-    const arcMaterial = new THREE.LineBasicMaterial({ color: 0x0077ff });
+    const arcMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x0077ff, 
+      transparent: true, 
+      opacity: 0.7 
+    });
 
     const manualArcPoints: THREE.Vector3[] = [];
     for (let i = 0; i <= arcSegments; i++) {
@@ -390,7 +409,7 @@ export function RoomVisualization({
 
   return (
     <>
-      <div ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '400px' }} />
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
       
       {renderer && scene && camera && (
         <>

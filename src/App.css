@@ -1,7 +1,9 @@
 #root {
-  max-width: 1280px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 2rem;
+  /* padding: 1rem; */ /* Removed to prevent interference with h-screen components */
+  padding-left: 1rem; /* Adjusted side padding */
+  padding-right: 1rem; /* Adjusted side padding */
   text-align: center;
 }
 

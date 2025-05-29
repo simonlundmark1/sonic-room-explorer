@@ -23,6 +23,7 @@ interface PositionControl2DProps {
 
 const HANDLE_SIZE = 20; // Increased handle size (was 12)
 const CLICK_RADIUS = 15; // px, for detecting clicks near a handle
+const GRID_CELL_SIZE = 25; // px, for square grid cells
 
 export const PositionControl2D: React.FC<PositionControl2DProps> = ({
   label,
@@ -40,6 +41,10 @@ export const PositionControl2D: React.FC<PositionControl2DProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [activePointId, setActivePointId] = useState<string | null>(null);
 
+  // Calculate number of grid lines based on control dimensions and cell size
+  const numHorizontalLines = Math.max(0, Math.floor(controlHeight / GRID_CELL_SIZE) -1);
+  const numVerticalLines = Math.max(0, Math.floor(controlWidth / GRID_CELL_SIZE) - 1);
+
   const getScaledCoords = (val1: number, val2: number) => {
     let screenY = (val2 / dim2Max) * controlHeight;
     if (invertDim2Axis) {
@@ -51,14 +56,14 @@ export const PositionControl2D: React.FC<PositionControl2DProps> = ({
     };
   };
 
-  const getValueCoords = (screenX: number, screenY: number) => {
+  const getValueCoords = useCallback((screenX: number, screenY: number) => {
     const val1 = (screenX / controlWidth) * dim1Max;
     let val2 = (screenY / controlHeight) * dim2Max;
     if (invertDim2Axis) {
       val2 = ((controlHeight - screenY) / controlHeight) * dim2Max;
     }
     return { val1, val2 };
-  };
+  }, [controlWidth, controlHeight, dim1Max, dim2Max, invertDim2Axis]);
 
   const calculatePositionFromEvent = useCallback((event: MouseEvent | React.MouseEvent<HTMLDivElement>) => {
     if (!controlRef.current) return null;
@@ -128,21 +133,21 @@ export const PositionControl2D: React.FC<PositionControl2DProps> = ({
 
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      <div className="flex items-center space-x-2">
-        <span className="text-xs text-gray-500 w-10 text-right select-none">{axisLabel2}</span>
+      <label className="block text-sm font-medium text-black mb-1 text-center">{label}</label>
+      <div className="flex items-center space-x-2 justify-center">
+        <span className="text-xs text-black w-10 text-right select-none">{axisLabel2}</span>
         <div
           ref={controlRef}
-          className="relative bg-gray-100 border border-gray-300 rounded cursor-pointer select-none"
+          className="relative bg-white border border-black rounded-none cursor-pointer select-none box-border"
           style={{ width: controlWidth, height: controlHeight }}
           onMouseDown={handleMouseDown}
         >
-          {/* Grid lines */}
-          {[...Array(4)].map((_, i) => (
-            <div key={`h-${i}`} className="absolute w-full h-px bg-gray-200 pointer-events-none" style={{ top: `${(i + 1) * 25}%` }} />
+          {/* Grid lines - Xerox style: square cells */}
+          {[...Array(numHorizontalLines)].map((_, i) => (
+            <div key={`h-${i}`} className="absolute w-full h-px bg-black pointer-events-none" style={{ top: `${(i + 1) * GRID_CELL_SIZE}px` }} />
           ))}
-          {[...Array(4)].map((_, i) => (
-            <div key={`v-${i}`} className="absolute h-full w-px bg-gray-200 pointer-events-none" style={{ left: `${(i + 1) * 25}%` }} />
+          {[...Array(numVerticalLines)].map((_, i) => (
+            <div key={`v-${i}`} className="absolute h-full w-px bg-black pointer-events-none" style={{ left: `${(i + 1) * GRID_CELL_SIZE}px` }} />
           ))}
           
           {/* Draggable Handles */}
@@ -151,7 +156,7 @@ export const PositionControl2D: React.FC<PositionControl2DProps> = ({
             return (
               <div
                 key={point.id}
-                className={`absolute bg-white border-2 border-gray-400 rounded-full shadow-md flex items-center justify-center`}
+                className={`absolute bg-white border-2 border-black rounded-full shadow-md flex items-center justify-center`}
                 style={{
                   left: scaled.x - HANDLE_SIZE / 2,
                   top: scaled.y - HANDLE_SIZE / 2,
@@ -171,13 +176,14 @@ export const PositionControl2D: React.FC<PositionControl2DProps> = ({
 
           {/* Optional: Display values of the active point or all points */}
            {activePointId && points.find(p => p.id === activePointId) && (
-             <div className="absolute bottom-1 right-1 text-xs bg-white/70 px-1 py-0.5 rounded pointer-events-none select-none">
+             <div className="absolute bottom-1 right-1 text-xs bg-white/80 px-1 py-0.5 rounded pointer-events-none select-none text-black border border-black">
                 {points.find(p=>p.id === activePointId)!.val1.toFixed(2)}, {points.find(p=>p.id === activePointId)!.val2.toFixed(2)}
             </div>
            )}
         </div>
+        <span className="w-10"></span> {/* Spacer for symmetry */}
       </div>
-      <div className="ml-12 text-xs text-gray-500 mt-1 text-center select-none" style={{width: controlWidth}}>{axisLabel1}</div>
+      <div className="ml-12 text-xs text-black mt-1 text-center select-none" style={{width: controlWidth}}>{axisLabel1}</div>
     </div>
   );
 }; 
