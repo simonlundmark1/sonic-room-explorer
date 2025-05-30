@@ -134,7 +134,6 @@ export default function RoomModeCalculator() {
   const [isChartManuallyPositioned, setIsChartManuallyPositioned] = useState(false);
   const [isResizingChart, setIsResizingChart] = useState(false);
   const resizeStartInfo = useRef<{startX: number, startY: number, startWidth: number, startHeight: number} | null>(null);
-  const [isLeftScrollbarVisible, setIsLeftScrollbarVisible] = useState(false);
   const leftScrollableRef = useRef<HTMLDivElement>(null);
   const rightScrollableRef = useRef<HTMLDivElement>(null);
   const [canvasAspectRatio, setCanvasAspectRatio] = useState<string>('16/9');
@@ -194,37 +193,7 @@ export default function RoomModeCalculator() {
       });
   }, [selectedSpeakerPath]); // Re-run when selectedSpeakerPath changes
 
-  // Monitor left sidebar scrollbar visibility
-  useEffect(() => {
-    const checkScrollbarVisibility = () => {
-      if (leftScrollableRef.current) {
-        const element = leftScrollableRef.current;
-        const hasScrollbar = element.scrollHeight > element.clientHeight;
-        setIsLeftScrollbarVisible(hasScrollbar);
-      }
-    };
-
-    checkScrollbarVisibility();
-    
-    // Check on window resize
-    window.addEventListener('resize', checkScrollbarVisibility);
-    
-    // Use ResizeObserver to detect content changes
-    let resizeObserver: ResizeObserver | null = null;
-    if (leftScrollableRef.current) {
-      resizeObserver = new ResizeObserver(checkScrollbarVisibility);
-      resizeObserver.observe(leftScrollableRef.current);
-    }
-
-    return () => {
-      window.removeEventListener('resize', checkScrollbarVisibility);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-    };
-  }, []);
-
-    // Monitor zoom level and adjust canvas size
+  // Monitor zoom level and adjust canvas size
   useEffect(() => {
     const updateCanvasSize = () => {
       const viewportHeight = window.innerHeight;
@@ -884,13 +853,9 @@ export default function RoomModeCalculator() {
           </CardHeader>
           <div 
             ref={leftScrollableRef}
-            className={`w-full flex-1 min-h-0 overflow-y-scroll pt-4 pl-1 pr-4 pb-6 space-y-6 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-transparent scrollbar-thin !bg-transparent ${
-              isLeftScrollbarVisible 
-                ? '[&::-webkit-scrollbar-thumb]:bg-black [&::-webkit-scrollbar-thumb]:rounded-none [&::-webkit-scrollbar-thumb:hover]:bg-gray-800' 
-                : '[&::-webkit-scrollbar-thumb]:bg-transparent [&::-webkit-scrollbar-thumb:hover]:bg-transparent'
-            }`}
+            className="w-full flex-1 min-h-0 overflow-y-scroll pt-4 pl-1 pr-4 pb-6 space-y-6 [&::-webkit-scrollbar]:w-3 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-black [&::-webkit-scrollbar-thumb]:rounded-none [&::-webkit-scrollbar-thumb:hover]:bg-gray-800 scrollbar-thin !bg-transparent"
             style={{
-              scrollbarColor: isLeftScrollbarVisible ? 'black transparent' : 'transparent transparent'
+              scrollbarColor: 'black transparent'
             }}
           >
             <RoomControls
